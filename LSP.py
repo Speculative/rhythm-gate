@@ -313,7 +313,7 @@ class GravityThing(object):
         self.elapsed = nexttime - self.lud
         self.lud = nexttime
 
-        self.ymov += GravityThing.GRAVITY
+        self.ymov += GravityThing.GRAVITY * self.elapsed * 100
         self.x += self.xmov * self.elapsed * 100
         self.y += self.ymov * self.elapsed * 100
 
@@ -402,7 +402,7 @@ def do_init():
     LSPGate.BLOCK_IMAGE = pygame.transform.rotozoom(pygame.image.load("./gatenew.png"),0,0.4)
     LSPGate.BLOCK_IMAGE = LSPGate.BLOCK_IMAGE.convert_alpha(screen)
 
-    #BACKGROUND = pygame.image.load("./background.png")
+    BACKGROUND = pygame.image.load("./background.png")
 
     return screen
 
@@ -492,7 +492,7 @@ def mainloop(screen, gameobjs, song, bpm):
         screen.fill(BKG_COLOR)
 
         #render bkg img
-        #screen.blit(BACKGROUND,(0,0))
+        screen.blit(BACKGROUND,(0,0))
 
         #render objs
         for obj in livingobjs:
