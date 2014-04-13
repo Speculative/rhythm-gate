@@ -10,6 +10,7 @@ MOUSE_HISTORY_SIZE =20
 
 BKG_COLOR = (0x22,0x22,0x22)
 
+FONTU = None
 
 #HURRR DURR PYTHON SUX
 def blit_alpha(target, source, location, opacity):
@@ -185,7 +186,7 @@ class LSPGate(LSPBeat):
         else:
             attack_angle = 0
 
-        print attack_angle
+        #print attack_angle
 
         mult = attack_angle / 2*math.pi
         dtime = gametime - time.time()
@@ -197,9 +198,9 @@ class LSPGate(LSPBeat):
 
 
 class ScoreParticle(object):
-    GRAVITY = 5
-    MOM_INIT_Y = -5
-    MOM_INIT_X = 5
+    GRAVITY = 0.1
+    MOM_INIT_Y = -1
+    MOM_INIT_X = 1
     LIFETIME = 1
 
     def __init__(self, x, y, score):
@@ -208,10 +209,12 @@ class ScoreParticle(object):
         self.initial = time.time()
         self.last = self.initial
         self.isdead=False
+        self.x=x
+        self.y=y
 
         self.elapsed = 0
 
-        self.renderedText = 0;
+        self.renderedtext = FONTU.render("SHIT", False, (255,255,255,100));
 
     def update(self, gametime):
         elapsed = gametime - self.last
@@ -221,22 +224,23 @@ class ScoreParticle(object):
 
         self.elapsed = gametime - self.initial
 
-        if(gametime - self.initial > LIFETIME):
+        if(gametime - self.initial > ScoreParticle.LIFETIME):
             self.isdead=True
 
     def render(self, surface):
-        pass
+        self.renderedtext.set_alpha(255 - 255.0*self.elapsed / ScoreParticle.LIFETIME);
+        surface.blit(self.renderedtext,(self.x, self.y))
 
 """gets the display screen
 """
 def do_init():
+    global FONTU
     pygame.init();
     pygame.display.set_caption("LSP")
     screen = pygame.display.set_mode((RESOLUTION_X, RESOLUTION_Y))
 
     pygame.mouse.set_visible(False)
-
-
+    FONTU = pygame.font.Font("./wire1.ttf", 28);
 
     if(LSPGate.BLOCK_IMAGE == None):
         LSPGate.BLOCK_IMAGE = pygame.transform.rotozoom(pygame.image.load("./gate.png"),0,0.4)
@@ -262,7 +266,7 @@ def mainloop(screen, gameobjs, song, bpm):
 
     mousehistory = [pygame.mouse.get_pos()] * MOUSE_HISTORY_SIZE
 
-    print "starting (lapse = %s)"%(framelapse)
+    #print "starting (lapse = %s)"%(framelapse)
 
     while(True):
         gametime = time.time()
@@ -295,6 +299,9 @@ def mainloop(screen, gameobjs, song, bpm):
         for obj in livingobjs:
             obj.update(gametime)
 
+        for part in particles:
+            part.update(gametime)
+
         #triggering objs
         for obj in livingobjs:
             if(obj.state == LSPBeat.STATE_WAITING and obj.check_hit(mousehistory)):
@@ -305,7 +312,7 @@ def mainloop(screen, gameobjs, song, bpm):
         i = 0
         while i < len(livingobjs):
             if (livingobjs[i].isdead):
-                print "removing obj"
+                #print "removing obj"
                 livingobjs.remove(livingobjs[i])
             else:
                 i += 1
@@ -314,7 +321,7 @@ def mainloop(screen, gameobjs, song, bpm):
         i = 0
         while i < len(particles):
             if (particles[i].isdead):
-                particles.remove(livingobjs[i])
+                particles.remove(particles[i])
             else:
                 i += 1
 
@@ -327,8 +334,8 @@ def mainloop(screen, gameobjs, song, bpm):
             obj.render(screen, gametime)
 
         #render particles
-        for partic in livingobjs:
-            partic.render(screen, gametime)
+        for partic in particles:
+            partic.render(screen)
 
         #render mouse "trails"
         i=0
@@ -338,19 +345,14 @@ def mainloop(screen, gameobjs, song, bpm):
                 pt[0],pt[1],
                 int(5.0*i/MOUSE_HISTORY_SIZE),
                 (255,255,255,255*(0.8*i/MOUSE_HISTORY_SIZE) ))
-            pygame.gfxdraw.aacircle(
-                screen,
-                pt[0],pt[1],
-                int(5.0*i/MOUSE_HISTORY_SIZE),
-                (255,255,255,255*(0.8*i/MOUSE_HISTORY_SIZE) ))
-
             i+=1
 
         #============== cap fps ==============
         temp = time.time();
         if(temp>lastup+framelapse):
-            time.sleep( (lastup + framelapse) - temp)
-
+            #time.sleep( (lastup + framelapse) - temp)
+            pass
+            
         #blit screen
         pygame.display.flip()
         lastup = time.time()
