@@ -193,6 +193,8 @@ class LSPGate(LSPBeat):
 
         LSPBeat.trigger(self, gametime, mousehistory)
 
+        return random.random()
+
     def update(self, gametime):
         LSPBeat.update(self, gametime)
 
@@ -203,12 +205,6 @@ class ScoreParticle(object):
     MOM_INIT_X = 1
     LIFETIME = 1
 
-
-    FONTU_WORST = FONTU.render("SHIT", False, (255,255,255,100));
-    FONTU_WORST = FONTU.render("SHIT", False, (255,255,255,100));
-    FONTU_WORST = FONTU.render("SHIT", False, (255,255,255,100));
-    FONTU_WORST = FONTU.render("SHIT", False, (255,255,255,100));
-    FONTU_WORST = FONTU.render("SHIT", False, (255,255,255,100));
 
     def __init__(self, x, y, score):
         self.momentumy = ScoreParticle.MOM_INIT_Y
@@ -257,6 +253,13 @@ def do_init():
 
     pygame.mouse.set_visible(False)
     FONTU = pygame.font.Font("./wire1.ttf", 28);
+
+    ScoreParticle.FONTU_BEST = FONTU.render("PERFECT!", False, (255,255,255,100));
+    ScoreParticle.FONTU_EH = FONTU.render("GOOD!", False, (255,255,255,100));
+    ScoreParticle.FONTU_GOOD = FONTU.render("OKAY", False, (255,255,255,100));
+    ScoreParticle.FONTU_OH = FONTU.render("NOT GREAT", False, (255,255,255,100));
+    ScoreParticle.FONTU_WORST = FONTU.render("KILL YOURSELF", False, (255,255,255,100));
+
 
     if(LSPGate.BLOCK_IMAGE == None):
         LSPGate.BLOCK_IMAGE = pygame.transform.rotozoom(pygame.image.load("./gate.png"),0,0.4)
