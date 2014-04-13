@@ -1,16 +1,24 @@
 import pygame,math,time,sys,random,pygame.gfxdraw
 
 RESOLUTION_X = 1024
-RESOLUTION_Y = 768
+RESOLUTION_Y = 400
 
 SPAWN_TIME = 0.2
 DECAY_TIME = 0.2
 
 MOUSE_HISTORY_SIZE =20
 
-BKG_COLOR = (0x22,0x22,0x22)
+BKG_COLOR = (45,17,44)
 
 FONTU = None
+
+scoreColors=[
+    (239,67,57),
+    (202,41,62),
+    (202,41,62),
+    (130,2,51),
+    (83,0,49),
+]
 
 #HURRR DURR PYTHON SUX
 def blit_alpha(target, source, location, opacity):
@@ -214,7 +222,7 @@ class ScoreParticle(object):
 
 
     def __init__(self, x, y, score):
-        self.momentumy = ScoreParticle.MOM_INIT_Y
+        self.momentumy = ScoreParticle.MOM_INIT_Y * random.random()
         self.momentumx = ScoreParticle.MOM_INIT_X * random.random() - ScoreParticle.MOM_INIT_X * random.random()
         self.initial = time.time()
         self.last = self.initial
@@ -225,15 +233,15 @@ class ScoreParticle(object):
         self.elapsed = 0
 
         if(score>0.8):
-            self.renderedtext = ScoreParticle.FONTU_BEST;
+            self.renderedtext = ScoreParticle.FONTU_BEST
         elif(score>0.6):
-            self.renderedtext = ScoreParticle.FONTU_EH;
+            self.renderedtext = ScoreParticle.FONTU_EH
         elif(score>0.4):
-            self.renderedtext = ScoreParticle.FONTU_GOOD;
+            self.renderedtext = ScoreParticle.FONTU_GOOD
         elif(score>0.2):
             self.renderedtext = ScoreParticle.FONTU_OH;
         else:
-            self.renderedtext = ScoreParticle.FONTU_WORST;
+            self.renderedtext = ScoreParticle.FONTU_WORST
             
     def update(self, gametime):
         elapsed = gametime - self.last
@@ -250,6 +258,45 @@ class ScoreParticle(object):
         self.renderedtext.set_alpha(255 - 255.0*self.elapsed / ScoreParticle.LIFETIME);
         surface.blit(self.renderedtext,(self.x, self.y))
 
+class SparksParticle(ScoreParticle):
+    def __init__(self, x, y, score):
+        self.momentumy = ScoreParticle.MOM_INIT_Y * random.random()
+        self.momentumx = ScoreParticle.MOM_INIT_X * random.random() - ScoreParticle.MOM_INIT_X * random.random()
+        self.initial = time.time()
+        self.last = self.initial
+        self.isdead=False
+        self.x=x
+        self.y=y
+
+        self.elapsed = 0
+
+
+        if(score>0.8):
+            self.color = scoreColors[0]
+        elif(score>0.6):
+            self.color = scoreColors[1]
+        elif(score>0.4):
+            self.color = scoreColors[2]
+        elif(score>0.2):
+            self.color = scoreColors[3]
+        else:
+            self.color = scoreColors[4]
+
+    def update(self, gametime):
+        elapsed = gametime - self.last
+        self.momentumy += ScoreParticle.GRAVITY*elapsed
+        self.y += self.momentumy
+        self.x += self.momentumx
+
+        self.elapsed = gametime - self.initial
+
+        if(gametime - self.initial > ScoreParticle.LIFETIME):
+            self.isdead=True
+
+    def render(self, surface):
+        pygame.gfxdraw.filled_circle(surface, int(self.x), int(self.y),
+                int(1.0 * self.elapsed / ScoreParticle.LIFETIME * 5), (255,255,255))
+
 """gets the display screen
 """
 def do_init():
@@ -261,11 +308,11 @@ def do_init():
     pygame.mouse.set_visible(False)
     FONTU = pygame.font.Font("./wire1.ttf", 28);
 
-    ScoreParticle.FONTU_BEST = FONTU.render("PERFECT!", False, (255,255,0,100));
-    ScoreParticle.FONTU_EH = FONTU.render("GOOD!", False, (0,255,0,100));
-    ScoreParticle.FONTU_GOOD = FONTU.render("OKAY", False, (255,255,255,100));
-    ScoreParticle.FONTU_OH = FONTU.render("NOT GREAT", False, (255,255,100,100));
-    ScoreParticle.FONTU_WORST = FONTU.render("KILL YOURSELF", False, (255,0,0,100));
+    ScoreParticle.FONTU_BEST = FONTU.render("PERFECT!", False, scoreColors[0]);
+    ScoreParticle.FONTU_EH = FONTU.render("GOOD!", False, scoreColors[1]);
+    ScoreParticle.FONTU_GOOD = FONTU.render("OKAY", False, scoreColors[2]);
+    ScoreParticle.FONTU_OH = FONTU.render("NOT GREAT", False, scoreColors[3]);
+    ScoreParticle.FONTU_WORST = FONTU.render("KILL YOURSELF", False, scoreColors[4]);
 
 
     if(LSPGate.BLOCK_IMAGE == None):
@@ -315,7 +362,7 @@ def mainloop(screen, gameobjs, song, bpm):
         #print gameobjs
         while(objptr < len(gameobjs) and 
                 initial + gameobjs[objptr].spawntime <= gametime - SPAWN_TIME):
-            print "spawning obj (ini+spawn = %s, spawn = %s, game-- = %s)"%(initial + gameobjs[objptr].spawntime, gameobjs[objptr].spawntime, gametime - SPAWN_TIME)
+            #print "spawning obj (ini+spawn = %s, spawn = %s, game-- = %s)"%(initial + gameobjs[objptr].spawntime, gameobjs[objptr].spawntime, gametime - SPAWN_TIME)
             livingobjs.append(gameobjs[objptr])
             objptr += 1
 
@@ -333,6 +380,8 @@ def mainloop(screen, gameobjs, song, bpm):
             if(obj.state == LSPBeat.STATE_WAITING and obj.check_hit(mousehistory)):
                 score = obj.trigger(gametime, mousehistory)
                 particles.append(ScoreParticle(obj.x, obj.y, score))
+                for i in range(10):
+                    particles.append(SparksParticle(obj.x, obj.y, score))
 
         #removing objs
         i = 0
@@ -376,7 +425,7 @@ def mainloop(screen, gameobjs, song, bpm):
         #============== cap fps ==============
         temp = time.time();
         if(temp>lastup+framelapse):
-            #time.sleep( (lastup + framelapse) - temp)
+            time.sleep( (lastup + framelapse) - temp)
             pass
 
         #blit screen
@@ -388,10 +437,7 @@ if __name__ == "__main__":
 
 
     fakelsps = [
-            LSPGate(0, 0.1, 0.7, 0),
-            LSPGate(0.5, 0.4, 0.1, math.pi*0.1),
-            LSPGate(1, 0.3, 0.2, math.pi*0.1),
-            LSPGate(1.5, 0.5, 0.5, 1)
+            LSPGate(i*1, random.random(), random.random(), random.random()*math.pi*2) for i in range(40)
             ]
 
     mainloop(screen, fakelsps, None ,10);
