@@ -67,6 +67,9 @@ class LSPBeat(object):
         elif (self.state == LSPBeat.STATE_WAITING):
             self.render_wait(screen, gametime-self.changetime)
 
+        elif (self.state == LSPBeat.STATE_FAILED):
+            self.render_failed(screen, gametime-self.changetime)
+
         else:
             self.render_dying(screen, gametime-self.changetime)
 
@@ -80,11 +83,15 @@ class LSPBeat(object):
             self.changetime = gametime
             self.state = LSPBeat.STATE_WAITING
 
-        if(self.state == LSPBeat.STATE_DYING and 
+        if(self.state == LSPBeat.STATE_WAITING and
+            gametime > self.changetime+HOLD_BEFORE_DEATH):
+            self.changetime = gametime
+            self.state = LSPBeat.STATE_FAILED
+
+        if( (self.state == LSPBeat.STATE_DYING or self.state == LSPBeat.STATE_FAILED) and 
             self.changetime + DECAY_TIME <= gametime):
             self.changetime = gametime
             self.isdead = True
-
 
     def check_hit(self,mousehistory):
         return False
@@ -123,7 +130,7 @@ class LSPGate(LSPBeat):
         tem = max(self.rendered.get_width(), self.rendered.get_height())
 
         self.rendered = self.rendered.convert_alpha()
-        self.roughrect = pygame.rect.Rect( (self.x-tem/2,self.y-tem/2,tem, tem) );
+        self.roughrect = pygame.rect.Rect( (self.x-tem/2,self.y-tem/2,tem, tem) )
 
         #print self.roughrect
 
@@ -217,6 +224,17 @@ class LSPGate(LSPBeat):
             ), int(255 * (1.0-min(1.0, elapsed / DECAY_TIME)) ));
 
 
+    def render_failed(self, screen, elapsed):
+        colored = pygame.transform.rotate(self.rendered, self.grav.rot);
+        cul = pygame.Color( scoreColors[-1][0], scoreColors[-1][1], scoreColors[-1][2] )
+        cul.a = int(255 * elapsed / DECAY_TIME)
+        colored.fill(cul, special_flags=pygame.BLEND_RGB_MULT)
+
+        blit_alpha(screen, colored, (
+            self.grav.x - colored.get_width()/2 ,
+            self.grav.y - colored.get_height()/2 
+        ), int(255 * (1-(elapsed / DECAY_TIME))) );
+
     def trigger(self, gametime, mousehistory):
         if (mousehistory[-1][0] - mousehistory[-2][0]) != 0:
             attack_angle = math.atan(
@@ -256,6 +274,12 @@ class LSPGate(LSPBeat):
     def update(self, gametime):
         LSPBeat.update(self, gametime)
         
+        if(self.state == LSPGate.STATE_FAILED):
+            if not 'grav' in self.__dict__:
+                self.grav = GravityThing(self.x,self.y,
+                    GravityThing.MOM_INIT_X*random.random(), 0.0)
+            self.grav.update(gametime);
+
         if(self.state == LSPGate.STATE_DYING):
             self.grav1.update(gametime)
             self.grav2.update(gametime)
@@ -278,6 +302,11 @@ class GravityThing(object):
 
         self.isdead=False
         self.elapsed = 0
+        self.rot = 0
+
+        self.rmov = 0.2+random.random()*0.5
+        if random.random() > 0.5:
+            self.rmov = -self.rmov
         
     def update(self, nexttime):
         self.elapsed = nexttime - self.lud
@@ -286,6 +315,8 @@ class GravityThing(object):
         self.ymov += GravityThing.GRAVITY
         self.x += self.xmov * self.elapsed * 100
         self.y += self.ymov * self.elapsed * 100
+
+        self.rot += self.rmov * self.elapsed *100
 
         if( (self.lud -self.initial) > GravityThing.LIFETIME):
             self.isdead = True
@@ -318,13 +349,16 @@ class ScoreParticle(object):
 
     def render(self, surface):
         self.renderedtext.set_alpha(255 - 255.0*self.grav.getFracCompl());
-        surface.blit(self.renderedtext,(self.grav.x, self.grav.y))
+
+        n = pygame.transform.rotate(self.renderedtext, self.grav.rot);
+
+        surface.blit(n,(self.grav.x-n.get_width()/2, self.grav.y-n.get_width()/2))
 
 class SparksParticle(ScoreParticle):
     def __init__(self, x, y, score):
         self.grav = GravityThing(x,y,
             GravityThing.MOM_INIT_X * random.random() - GravityThing.MOM_INIT_X * random.random(),
-            GravityThing.MOM_INIT_Y * random.random());
+            GravityThing.MOM_INIT_Y * 2*(0.5+0.5*random.random()) );
 
         if(score>0.8):
             self.color = scoreColors[0]
@@ -342,7 +376,7 @@ class SparksParticle(ScoreParticle):
 
     def render(self, surface):
         pygame.gfxdraw.filled_circle(surface, int(self.grav.x), int(self.grav.y),
-                int(1.0 * self.grav.getFracCompl()* 5), (255,255,255))
+                int(1.0 * self.grav.getFracCompl()* 5), self.color)
 
 """gets the display screen
 """
@@ -412,10 +446,6 @@ def mainloop(screen, gameobjs, song, bpm):
             #print "spawning obj (ini+spawn = %s, spawn = %s, game-- = %s)"%(initial + gameobjs[objptr].spawntime, gameobjs[objptr].spawntime, gametime - SPAWN_TIME)
             livingobjs.append(gameobjs[objptr])
             objptr += 1
-        
-        while(len(livingobjs) and 
-            gametime > initial + livingobjs[0].spawntime + HOLD_BEFORE_DEATH):
-            livingobjs.remove(livingobjs[0])
 
         #============== UPDATES ==============
 
