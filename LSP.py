@@ -4,6 +4,7 @@ RESOLUTION_X = 1024
 RESOLUTION_Y = 600
 
 SPAWN_TIME = 0.8
+HOLD_BEFORE_DEATH=1.0
 DECAY_TIME = 0.4
 
 MOUSE_HISTORY_SIZE =100
@@ -278,8 +279,8 @@ class GravityThing(object):
         self.lud = nexttime
 
         self.ymov += GravityThing.GRAVITY
-        self.x += self.xmov
-        self.y += self.ymov
+        self.x += self.xmov * self.elapsed * 100
+        self.y += self.ymov * self.elapsed * 100
 
         if( (self.lud -self.initial) > GravityThing.LIFETIME):
             self.isdead = True
@@ -351,9 +352,9 @@ def do_init():
 
     ScoreParticle.FONTU_BEST = FONTU.render("PERFECT!", False, scoreColors[0]);
     ScoreParticle.FONTU_EH = FONTU.render("GOOD!", False, scoreColors[1]);
-    ScoreParticle.FONTU_GOOD = FONTU.render("OKAY", False, scoreColors[2]);
-    ScoreParticle.FONTU_OH = FONTU.render("NOT GREAT", False, scoreColors[3]);
-    ScoreParticle.FONTU_WORST = FONTU.render("KILL YOURSELF", False, scoreColors[4]);
+    ScoreParticle.FONTU_GOOD = FONTU.render("OKAY.", False, scoreColors[2]);
+    ScoreParticle.FONTU_OH = FONTU.render("NOT GREAT..", False, scoreColors[3]);
+    ScoreParticle.FONTU_WORST = FONTU.render("KILL YOURSELF.", False, scoreColors[4]);
 
 
     #if(LSPGate.BLOCK_IMAGE == None):
@@ -406,13 +407,10 @@ def mainloop(screen, gameobjs, song, bpm):
             #print "spawning obj (ini+spawn = %s, spawn = %s, game-- = %s)"%(initial + gameobjs[objptr].spawntime, gameobjs[objptr].spawntime, gametime - SPAWN_TIME)
             livingobjs.append(gameobjs[objptr])
             objptr += 1
-        """
+        
         while(len(livingobjs) and 
-            initial + gameobjs[objptr].spawntime <= gametime + SPAWN_TIME):
-            #print "spawning obj (ini+spawn = %s, spawn = %s, game-- = %s)"%(initial + gameobjs[objptr].spawntime, gameobjs[objptr].spawntime, gametime - SPAWN_TIME)
-            livingobjs.append(gameobjs[objptr])
-        objptr += 1
-        """
+            gametime > initial + livingobjs[0].spawntime + HOLD_BEFORE_DEATH):
+            livingobjs.remove(livingobjs[0])
 
         #============== UPDATES ==============
 
