@@ -1,10 +1,10 @@
-import pygame,math,time,sys,random
+import pygame,math,time,sys,random,pygame.gfxdraw
 
 RESOLUTION_X = 1024
 RESOLUTION_Y = 768
 
-SPAWN_TIME = 0.25
-DECAY_TIME = 0.25
+SPAWN_TIME = 0.5
+DECAY_TIME = 0.5
 
 MOUSE_HISTORY_SIZE =20
 
@@ -21,7 +21,7 @@ class LSPBeat(object):
 	"""
 	def __init__(self, spawntime):
 		self.spawntime = spawntime
-		self.changetime = spawntime
+		self.changetime = 0
 		self.state = LSPBeat.STATE_SPAWN
 		self.isdead = False
 
@@ -33,20 +33,34 @@ class LSPBeat(object):
 	"""
 	def trigger(self, gametime, mousehistory):
 		self.state = LSPBeat.STATE_DYING
+		self.changetime = gametime
 		return abs(gametime - self.spawntime)
 
 	def render(self, screen, gametime):
+		#print gametime, self.changetime, gametime - self.changetime
 		if (self.state == LSPBeat.STATE_SPAWN):
 			self.render_spawn(screen, gametime-self.changetime)
+
 		elif (self.state == LSPBeat.STATE_WAITING):
 			self.render_wait(screen, gametime-self.changetime)
+
 		else:
 			self.render_dying(screen, gametime-self.changetime)
 
 	def update(self, gametime):
+
+		if(self.changetime == 0):
+			self.changetime = gametime
+
+		if(self.state == LSPBeat.STATE_SPAWN and 
+			self.changetime + SPAWN_TIME <= gametime):
+			self.changetime = gametime
+			self.state = LSPBeat.STATE_WAITING
+
 		if(self.state == LSPBeat.STATE_DYING and 
-			self.changetime + DECAY_TIME >= gametime):
-			this.isdead = True
+			self.changetime + DECAY_TIME <= gametime):
+			self.changetime = gametime
+			self.isdead = True
 
 	def check_hit(self,mousehistory):
 		return False
@@ -75,12 +89,11 @@ class LSPGate(LSPBeat):
 		self.angle = angle
 		self.breakspot = 0
 
-		if(LSPGate.BLOCK_IMAGE == None):
-			LSPGate.BLOCK_IMAGE = pygame.transform.rotozoom(pygame.image.load("./gate.png"),0,0.4)
-
 		self.rendered = pygame.transform.rotate(
 			LSPGate.BLOCK_IMAGE,
 			math.degrees(angle))
+
+		self.rendered = self.rendered.convert_alpha()
 
 	def check_hit(self, mousehistory):
 		poststep = mousehistory[-1]
@@ -114,8 +127,6 @@ class LSPGate(LSPBeat):
 		else:
 			attack_angle = 0
 
-		print attack_angle
-
 		mult = attack_angle / 2*math.pi
 		dtime = gametime - time.time()
 
@@ -126,15 +137,27 @@ class LSPGate(LSPBeat):
 		LSPBeat.update(self, gametime)
 
 	def render_spawn(self, screen, elapsed):
+		#self.rendered.set_alpha( int (255 * min(1.0, elapsed / DECAY_TIME) ))
+		'''
+		screen.blit(self.rendered, (
+			self.x - self.rendered.get_width()/2,
+			self.y - self.rendered.get_height()/2) );
+		'''
+		pass
+
+	def render_wait(self, screen, elapsed):
+
 		screen.blit(self.rendered, (
 			self.x - self.rendered.get_width()/2,
 			self.y - self.rendered.get_height()/2) );
 
-	def render_wait(self, screen, elapsed):
-		pass
 
 	def render_dying(self, screen, elapsed):
-		pass
+		self.rendered.set_alpha( int(255 * min(1.0, elapsed / DECAY_TIME)) )
+
+		screen.blit(self.rendered, (
+			self.x - self.rendered.get_width()/2 + int(255 * min(1.0, elapsed / DECAY_TIME)),
+			self.y - self.rendered.get_height()/2) );
 
 class ScoreParticle(object):
 	GRAVITY = 5
@@ -172,7 +195,15 @@ class ScoreParticle(object):
 def do_init():
 	pygame.init();
 	pygame.display.set_caption("LSP")
-	return pygame.display.set_mode((RESOLUTION_X, RESOLUTION_Y))
+	screen = pygame.display.set_mode((RESOLUTION_X, RESOLUTION_Y))
+
+	pygame.mouse.set_visible(False)
+
+	if(LSPGate.BLOCK_IMAGE == None):
+		LSPGate.BLOCK_IMAGE = pygame.transform.rotozoom(pygame.image.load("./gate.png"),0,0.4)
+		LSPGate.BLOCK_IMAGE = LSPGate.BLOCK_IMAGE.convert_alpha(screen)
+
+	return screen
 
 
 """
@@ -198,19 +229,27 @@ def mainloop(screen, gameobjs, song, bpm):
 		gametime = time.time()
 		elapsedTime = gametime - lastup
 
+		#============== EVT ==============
+
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				sys.exit()
 
+		#============== MOUSE HIST ==============
+
 		mousehistory.append(pygame.mouse.get_pos())
 		mousehistory = mousehistory[1:]
+
+		#============== RENDER OBJS ==============
 
 		#add objs as they come up
 		while(objptr < len(gameobjs) and 
 				initial + gameobjs[objptr].spawntime >= gametime - SPAWN_TIME):
-			print "spawning obj"
+			print "spawning obj (%s, %s)"%(initial + gameobjs[objptr].spawntime, gametime - SPAWN_TIME)
 			livingobjs.append(gameobjs[objptr])
 			objptr += 1
+
+		#============== UPDATES ==============
 
 		#updating objs & particles
 		for obj in livingobjs:
@@ -218,7 +257,7 @@ def mainloop(screen, gameobjs, song, bpm):
 
 		#triggering objs
 		for obj in livingobjs:
-			if(obj.state!=LSPBeat.STATE_DYING and obj.check_hit(mousehistory)):
+			if(obj.state == LSPBeat.STATE_WAITING and obj.check_hit(mousehistory)):
 				score = obj.trigger(gametime, mousehistory)
 				particles.append(ScoreParticle(obj.x, obj.y, score))
 
@@ -226,7 +265,8 @@ def mainloop(screen, gameobjs, song, bpm):
 		i = 0
 		while i < len(livingobjs):
 			if (livingobjs[i].isdead):
-				livingobjs.remove(i)
+				print "removing obj"
+				livingobjs.remove(livingobjs[i])
 			else:
 				i += 1
 
@@ -234,9 +274,11 @@ def mainloop(screen, gameobjs, song, bpm):
 		i = 0
 		while i < len(particles):
 			if (particles[i].isdead):
-				particles.remove(i)
+				particles.remove(livingobjs[i])
 			else:
 				i += 1
+
+		#============== RENDER ==============
 
 		screen.fill(BKG_COLOR)
 
@@ -248,7 +290,23 @@ def mainloop(screen, gameobjs, song, bpm):
 		for partic in livingobjs:
 			partic.render(screen, gametime)
 
-		#cap fps 
+		#render mouse "trails"
+		i=0
+		for pt in mousehistory:
+			pygame.gfxdraw.filled_circle(
+				screen,
+				pt[0],pt[1],
+				int(5.0*i/MOUSE_HISTORY_SIZE),
+				(255,255,255,255*(0.8*i/MOUSE_HISTORY_SIZE) ))
+			pygame.gfxdraw.aacircle(
+				screen,
+				pt[0],pt[1],
+				int(5.0*i/MOUSE_HISTORY_SIZE),
+				(255,255,255,255*(0.8*i/MOUSE_HISTORY_SIZE) ))
+
+			i+=1
+
+		#============== cap fps ==============
 		temp = time.time();
 		if(temp>lastup+framelapse):
 			time.sleep( (lastup + framelapse) - temp)
@@ -261,9 +319,9 @@ if __name__ == "__main__":
 	screen = do_init()
 
 	fakelsps = [
-		LSPGate(0, 0.1, 0.7, 0),
-		LSPGate(0, 0.4, 0.1, math.pi*0.42),
-		LSPGate(0, 0.3, 0.2, math.pi*0.1),
+		LSPGate(3, 0.1, 0.7, 0),
+		LSPGate(5, 0.4, 0.1, math.pi*0.42),
+		LSPGate(6, 0.3, 0.2, math.pi*0.1),
 	]
 
 	mainloop(screen, fakelsps, None ,10);
