@@ -203,6 +203,13 @@ class ScoreParticle(object):
     MOM_INIT_X = 1
     LIFETIME = 1
 
+
+    FONTU_WORST = FONTU.render("SHIT", False, (255,255,255,100));
+    FONTU_WORST = FONTU.render("SHIT", False, (255,255,255,100));
+    FONTU_WORST = FONTU.render("SHIT", False, (255,255,255,100));
+    FONTU_WORST = FONTU.render("SHIT", False, (255,255,255,100));
+    FONTU_WORST = FONTU.render("SHIT", False, (255,255,255,100));
+
     def __init__(self, x, y, score):
         self.momentumy = ScoreParticle.MOM_INIT_Y
         self.momentumx = ScoreParticle.MOM_INIT_X * random.random() - ScoreParticle.MOM_INIT_X * random.random()
@@ -214,8 +221,17 @@ class ScoreParticle(object):
 
         self.elapsed = 0
 
-        self.renderedtext = FONTU.render("SHIT", False, (255,255,255,100));
-
+        if(score>0.8):
+            self.renderedtext = ScoreParticle.FONTU_BEST;
+        elif(score>0.6):
+            self.renderedtext = ScoreParticle.FONTU_EH;
+        elif(score>0.4):
+            self.renderedtext = ScoreParticle.FONTU_GOOD;
+        elif(score>0.2):
+            self.renderedtext = ScoreParticle.FONTU_OH;
+        else:
+            self.renderedtext = ScoreParticle.FONTU_WORST;
+            
     def update(self, gametime):
         elapsed = gametime - self.last
         self.momentumy += ScoreParticle.GRAVITY*elapsed
@@ -352,7 +368,7 @@ def mainloop(screen, gameobjs, song, bpm):
         if(temp>lastup+framelapse):
             #time.sleep( (lastup + framelapse) - temp)
             pass
-            
+
         #blit screen
         pygame.display.flip()
         lastup = time.time()
