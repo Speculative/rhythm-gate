@@ -429,7 +429,7 @@ def mainloop(screen, gameobjs, song, bpm):
         #triggering objs
         for obj in livingobjs:
             if(pygame.mouse.get_pressed()[0] and
-                (obj.state == LSPBeat.STATE_WAITING || obj.state == LSPBeat.STATE_SPAWN)
+                (obj.state == LSPBeat.STATE_WAITING or obj.state == LSPBeat.STATE_SPAWN)
                 and obj.check_hit(mousehistory)):
                 score = obj.trigger(gametime, mousehistory)
                 particles.append(ScoreParticle(obj.x, obj.y, score))
@@ -513,7 +513,7 @@ def parse_map(filename):
                 if (line.startswith('g')):
                     #TODO: Create Beat objects
                     args = line.split(" ")
-                    beat_time = int(args[1]) * 60/headers['bpm'] + headers['offset']
+                    beat_time = float(args[1]) * 60/headers['bpm'] + headers['offset']
                     beats.append(LSPGate(beat_time, float(args[2]), float(args[3]), float(args[4])))
 
     return (headers, beats)
