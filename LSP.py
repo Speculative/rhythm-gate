@@ -7,7 +7,7 @@ RESOLUTION_Y = 600
 RESOLUTION_Y = 768
 >>>>>>> b086cd8e7be75ec5ee8f4893ff2a71548be0ac3b
 
-SPAWN_TIME = 0.2
+SPAWN_TIME = 0.8
 DECAY_TIME = 0.2
 
 MOUSE_HISTORY_SIZE =100
@@ -157,7 +157,7 @@ class LSPGate(LSPBeat):
                 m1 = (poststep[1] - prestep[1]) / (poststep[0] - prestep[0])
                 y = prestep[1] + m1 * (g2[0] - prestep[0])
                 ret = self.on_segment((g2[0], y), prestep, poststep) and self.on_segment((g2[0], y), g1, g2)
-                self.collidepoint = (x,y) if ret else None
+                self.collidepoint = (g2[0],y) if ret else None
                 return ret
 
             elif (g2[0] == g1[0] and poststep[0] == prestep[0]):
@@ -183,7 +183,7 @@ class LSPGate(LSPBeat):
         blit_alpha(screen, self.rendered, (
             self.x - self.rendered.get_width()/2 ,
             self.y - self.rendered.get_height()/2 
-        ), int(255 * min(1.0, elapsed / DECAY_TIME)));
+        ), int(255 * min(1.0, elapsed / SPAWN_TIME)));
         
 
     def render_wait(self, screen, elapsed):
@@ -206,16 +206,23 @@ class LSPGate(LSPBeat):
         else:
             attack_angle = 0
 
-            '''
+        
         breakspot = (self.collidepoint[0] - self.x, self.collidepoint[1] - self.y);
-        if( abs(attack_angle) < math.pi/2 or abs((attack_angle - pi)%(2*math.pi)) < math.pi/2 ): #vertical 
-            self.img1 = self.rendered.subsurface(pygame.rect.Rect(0,0,self.rendered.get_width(), breakspot[1]))
-            self.img2 = self.rendered.subsurface(pygame.rect.Rect(0,breakspot[1],self.rendered.get_width(), self.rendered.get_height()))
 
+        if( abs(attack_angle) < math.pi/2 or abs((attack_angle - pi)%(2*math.pi)) < math.pi/2 ):
+            #vertical 
+            r1 = pygame.rect.Rect(0,0,self.rendered.get_width(), self.rendered.get_height()/2)
+            r2 = pygame.rect.Rect(0,self.rendered.get_height()/2,self.rendered.get_width(), self.rendered.get_height()/2)
+            print r1, r2
+            self.img1 = self.rendered.subsurface(r1)
+            self.img2 = self.rendered.subsurface(r2)
+            self.grav1 = GravityThing(breakspot[0],breakspot[1],-GravityThing.MOM_INIT_X, GravityThing.MOM_INIT_Y);
+            self.grav2 = GravityThing(breakspot[0],breakspot[1], GravityThing.MOM_INIT_X, GravityThing.MOM_INIT_Y);
         else:
             self.img1 = self.rendered.subsurface(pygame.rect.Rect(0,0,breakspot[0], self.rendered.get_width()))
-            self.img2 = self.rendered.subsurface(pygame.rect.Rect(breakspot[0], 0, self.rendered.get_width(), self.rendered.get_height()))
-            '''
+            self.img2 = self.rendered.subsurface(pygame.rect.Rect(breakspot[0], 0, self.rendered.get_width()-breakspot[0], self.rendered.get_height()))
+            self.grav1 = GravityThing(breakspot[0],breakspot[1],-GravityThing.MOM_INIT_X, GravityThing.MOM_INIT_Y);
+            self.grav2 = GravityThing(breakspot[0],breakspot[1], GravityThing.MOM_INIT_X, GravityThing.MOM_INIT_Y);
 
         mult = attack_angle / 2*math.pi
         dtime = gametime - time.time()
@@ -226,10 +233,11 @@ class LSPGate(LSPBeat):
 
     def update(self, gametime):
         LSPBeat.update(self, gametime)
-        '''
+        
         if(self.state == LSPGate.STATE_DYING):
-            self.grav.update()
-        '''
+            self.grav1.update(gametime)
+            self.grav2.update(gametime)
+
 
 class GravityThing(object):
     
@@ -378,7 +386,7 @@ def mainloop(screen, gameobjs, song, bpm):
         #add objs as they come up
         #print gameobjs
         while(objptr < len(gameobjs) and 
-                initial + gameobjs[objptr].spawntime <= gametime - SPAWN_TIME):
+                initial + gameobjs[objptr].spawntime <= gametime + SPAWN_TIME):
             #print "spawning obj (ini+spawn = %s, spawn = %s, game-- = %s)"%(initial + gameobjs[objptr].spawntime, gameobjs[objptr].spawntime, gametime - SPAWN_TIME)
             livingobjs.append(gameobjs[objptr])
             objptr += 1
