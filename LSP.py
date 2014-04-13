@@ -8,7 +8,7 @@ RESOLUTION_Y = 768
 >>>>>>> b086cd8e7be75ec5ee8f4893ff2a71548be0ac3b
 
 SPAWN_TIME = 0.8
-DECAY_TIME = 0.2
+DECAY_TIME = 0.4
 
 MOUSE_HISTORY_SIZE =100
 
@@ -193,10 +193,27 @@ class LSPGate(LSPBeat):
 
 
     def render_dying(self, screen, elapsed):
-        blit_alpha(screen, self.rendered, (
-            self.x - self.rendered.get_width()/2 ,
-            self.y - self.rendered.get_height()/2 
-        ), int(255 * (1.0-min(1.0, elapsed / DECAY_TIME)) ));
+        if(self.split_horizontal):
+            blit_alpha(screen, self.img1, (
+                self.grav1.x - self.img1.get_width(),
+                self.grav1.y, 
+            ), int(255 * (1.0-min(1.0, elapsed / DECAY_TIME)) ));
+
+            blit_alpha(screen, self.img2, (
+                self.grav2.x,
+                self.grav2.y - self.img2.get_height()/2 
+            ), int(255 * (1.0-min(1.0, elapsed / DECAY_TIME)) ));
+        else:
+            blit_alpha(screen, self.img1, (
+                self.grav1.x-self.img1.get_width()/2,
+                self.grav1.y- self.img1.get_height(), 
+            ), int(255 * (1.0-min(1.0, elapsed / DECAY_TIME)) ));
+
+            blit_alpha(screen, self.img2, (
+                self.grav2.x-self.img1.get_width()/2,
+                self.grav2.y 
+            ), int(255 * (1.0-min(1.0, elapsed / DECAY_TIME)) ));
+
 
     def trigger(self, gametime, mousehistory):
         if (mousehistory[-1][0] - mousehistory[-2][0]) != 0:
@@ -211,14 +228,16 @@ class LSPGate(LSPBeat):
 
         if( abs(attack_angle) < math.pi/2 or abs((attack_angle - pi)%(2*math.pi)) < math.pi/2 ):
             #vertical 
+            self.split_horizontal = False
             r1 = pygame.rect.Rect(0,0,self.rendered.get_width(), self.rendered.get_height()/2)
             r2 = pygame.rect.Rect(0,self.rendered.get_height()/2,self.rendered.get_width(), self.rendered.get_height()/2)
-            print r1, r2
+            print "Virtical"
             self.img1 = self.rendered.subsurface(r1)
             self.img2 = self.rendered.subsurface(r2)
-            self.grav1 = GravityThing(breakspot[0],breakspot[1],-GravityThing.MOM_INIT_X, GravityThing.MOM_INIT_Y);
-            self.grav2 = GravityThing(breakspot[0],breakspot[1], GravityThing.MOM_INIT_X, GravityThing.MOM_INIT_Y);
+            self.grav1 = GravityThing(self.x,self.y,-GravityThing.MOM_INIT_X, GravityThing.MOM_INIT_Y);
+            self.grav2 = GravityThing(self.x,self.y, GravityThing.MOM_INIT_X, GravityThing.MOM_INIT_Y);
         else:
+            self.split_horizontal = True
             self.img1 = self.rendered.subsurface(pygame.rect.Rect(0,0,breakspot[0], self.rendered.get_width()))
             self.img2 = self.rendered.subsurface(pygame.rect.Rect(breakspot[0], 0, self.rendered.get_width()-breakspot[0], self.rendered.get_height()))
             self.grav1 = GravityThing(breakspot[0],breakspot[1],-GravityThing.MOM_INIT_X, GravityThing.MOM_INIT_Y);
