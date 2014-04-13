@@ -137,16 +137,14 @@ class LSPGate(LSPBeat):
 		LSPBeat.update(self, gametime)
 
 	def render_spawn(self, screen, elapsed):
-		#self.rendered.set_alpha( int (255 * min(1.0, elapsed / DECAY_TIME) ))
-		'''
+		self.rendered.set_alpha( int (255 * min(1.0, elapsed / DECAY_TIME) ))
+		
 		screen.blit(self.rendered, (
-			self.x - self.rendered.get_width()/2,
+			self.x - self.rendered.get_width()/2 - int(50 * (1.0-min(1.0, elapsed / DECAY_TIME))),
 			self.y - self.rendered.get_height()/2) );
-		'''
-		pass
+		
 
 	def render_wait(self, screen, elapsed):
-
 		screen.blit(self.rendered, (
 			self.x - self.rendered.get_width()/2,
 			self.y - self.rendered.get_height()/2) );
@@ -156,7 +154,7 @@ class LSPGate(LSPBeat):
 		self.rendered.set_alpha( int(255 * min(1.0, elapsed / DECAY_TIME)) )
 
 		screen.blit(self.rendered, (
-			self.x - self.rendered.get_width()/2 + int(255 * min(1.0, elapsed / DECAY_TIME)),
+			self.x - self.rendered.get_width()/2 + int(50 * min(1.0, elapsed / DECAY_TIME)),
 			self.y - self.rendered.get_height()/2) );
 
 class ScoreParticle(object):
@@ -243,9 +241,10 @@ def mainloop(screen, gameobjs, song, bpm):
 		#============== RENDER OBJS ==============
 
 		#add objs as they come up
+		#print gameobjs
 		while(objptr < len(gameobjs) and 
-				initial + gameobjs[objptr].spawntime >= gametime - SPAWN_TIME):
-			print "spawning obj (%s, %s)"%(initial + gameobjs[objptr].spawntime, gametime - SPAWN_TIME)
+				initial + gameobjs[objptr].spawntime <= gametime - SPAWN_TIME):
+			print "spawning obj (ini+spawn = %s, spawn = %s, game-- = %s)"%(initial + gameobjs[objptr].spawntime, gameobjs[objptr].spawntime, gametime - SPAWN_TIME)
 			livingobjs.append(gameobjs[objptr])
 			objptr += 1
 
@@ -319,9 +318,9 @@ if __name__ == "__main__":
 	screen = do_init()
 
 	fakelsps = [
-		LSPGate(3, 0.1, 0.7, 0),
-		LSPGate(5, 0.4, 0.1, math.pi*0.42),
-		LSPGate(6, 0.3, 0.2, math.pi*0.1),
+		LSPGate(0, 0.1, 0.7, 0),
+		LSPGate(1, 0.4, 0.1, math.pi*0.42),
+		LSPGate(3, 0.3, 0.2, math.pi*0.1),
 	]
 
 	mainloop(screen, fakelsps, None ,10);
