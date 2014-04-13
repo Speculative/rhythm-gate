@@ -231,7 +231,6 @@ class LSPGate(LSPBeat):
             self.split_horizontal = False
             r1 = pygame.rect.Rect(0,0,self.rendered.get_width(), self.rendered.get_height()/2)
             r2 = pygame.rect.Rect(0,self.rendered.get_height()/2,self.rendered.get_width(), self.rendered.get_height()/2)
-            print "Virtical"
             self.img1 = self.rendered.subsurface(r1)
             self.img2 = self.rendered.subsurface(r2)
             self.grav1 = GravityThing(self.x,self.y,-GravityThing.MOM_INIT_X, GravityThing.MOM_INIT_Y);

@@ -9,7 +9,7 @@ OFFSET 1
 #Beatmap
 #<entity> <beat number> <additional args>
 #g - Gate
-g 1 0.5 0.5 0
+g 1 0.5 0.5 1.67
 g 3 0.75 0.75 0
 g 4 0.5 0.25 0
 g 5 0.5 0.75 0.3
