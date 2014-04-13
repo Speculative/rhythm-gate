@@ -124,8 +124,6 @@ class LSPGate(LSPBeat):
         poststep = mousehistory[-1]
         prestep = mousehistory[-2]
 
-        if (poststep[0] == prestep[0]) or (poststep[1] == prestep[1]):
-            return False
         #Calculate endpoints of gate
         MAGIC_NUMBER = 100
         g1 = (self.x + MAGIC_NUMBER * math.sin(self.angle),
@@ -238,9 +236,9 @@ def do_init():
 
 
 
-    if(LSPGate.BLOCK_IMAGE == None):
-        LSPGate.BLOCK_IMAGE = pygame.transform.rotozoom(pygame.image.load("./gate.png"),0,0.4)
-        LSPGate.BLOCK_IMAGE = LSPGate.BLOCK_IMAGE.convert_alpha(screen)
+    #if(LSPGate.BLOCK_IMAGE == None):
+    LSPGate.BLOCK_IMAGE = pygame.transform.rotozoom(pygame.image.load("./gate.png"),0,0.4)
+    LSPGate.BLOCK_IMAGE = LSPGate.BLOCK_IMAGE.convert_alpha(screen)
 
     return screen
 
@@ -355,15 +353,48 @@ def mainloop(screen, gameobjs, song, bpm):
         pygame.display.flip()
         lastup = time.time()
 
+def parse_map(filename):
+    #Some constants we might look for
+    headers = {'bpm': 0, 'offset': 0}
+    #Ordered list (chronologically) of beat objects
+    beats = []
+
+    f = open(filename, 'r')
+    for line in f:
+        if not line.isspace() and not (line[0] == '#'):
+            line = line.strip()
+            if (line.startswith('FILE')):
+                headers['filename'] = line.split()[1]
+            elif (line.startswith('BPM')):
+                headers['bpm'] = float(line.split()[1])
+            elif (line.startswith('OFFSET')):
+                headers['offset'] = float(line.split()[1])
+            else:
+                #REQUIRES BPM TO HAVE BEEN DEFINED BY THIS POINT
+                if (line.startswith('g')):
+                    #TODO: Create Beat objects
+                    args = line.split(" ")
+                    beat_time = int(args[1]) * 60/headers['bpm'] + headers['offset']
+                    beats.append(LSPGate(beat_time, float(args[2]), float(args[3]), float(args[4])))
+
+    return (headers, beats)
+
+
 if __name__ == "__main__":
     screen = do_init()
 
+    headers, beats = parse_map("./" + sys.argv[1] + ".lsp")
+
+    pygame.mixer.init()
+    s = pygame.mixer.Sound("./" + sys.argv[1] + ".ogg")
+    s.set_volume(1.0)
+    s.play()
 
     fakelsps = [
             LSPGate(0, 0.1, 0.7, 0),
-            LSPGate(0, 0.4, 0.1, math.pi*0.1),
-            LSPGate(0, 0.3, 0.2, math.pi*0.1),
-            LSPGate(0, 0.5, 0.5, 1)
+            LSPGate(1, 0.4, 0.1, math.pi*0.1),
+            LSPGate(2, 0.3, 0.2, math.pi*0.1),
+            LSPGate(3, 0.5, 0.5, 1)
             ]
 
-    mainloop(screen, fakelsps, None ,10);
+    mainloop(screen, beats, None ,10);
