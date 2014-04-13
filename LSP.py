@@ -182,7 +182,7 @@ class ScoreParticle(object):
 
 		self.elapsed = 0
 
-		self.renderedText = 0;
+		self.renderedText;
 
 	def update(self, gametime):
 		elapsed = gametime - self.last
@@ -206,6 +206,8 @@ def do_init():
 	screen = pygame.display.set_mode((RESOLUTION_X, RESOLUTION_Y))
 
 	pygame.mouse.set_visible(False)
+
+	
 
 	if(LSPGate.BLOCK_IMAGE == None):
 		LSPGate.BLOCK_IMAGE = pygame.transform.rotozoom(pygame.image.load("./gate.png"),0,0.4)
