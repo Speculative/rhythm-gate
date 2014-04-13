@@ -150,7 +150,7 @@ class LSPGate(LSPBeat):
                     self.y - MAGIC_NUMBER * math.cos(self.angle))
 
             if (g2[0] == g1[0] and poststep[0] != prestep[0]):
-                m1 = (poststep[1] - prestep[1]) / (poststep[0] - prestep[0])
+                m1 = float((poststep[1] - prestep[1])) / float((poststep[0] - prestep[0]))
                 y = prestep[1] + m1 * (g2[0] - prestep[0])
                 ret = self.on_segment((g2[0], y), prestep, poststep) and self.on_segment((g2[0], y), g1, g2)
                 self.collidepoint = (g2[0],y) if ret else None
@@ -160,8 +160,8 @@ class LSPGate(LSPBeat):
                 return False
 
             elif (g2[0] != g1[0] and poststep[0] != prestep[0]):
-                m1 = (poststep[1] - prestep[1]) / (poststep[0] - prestep[0])
-                m2 = (g2[1] - g1[1]) / (g2[0] - g1[0])
+                m1 = float((poststep[1] - prestep[1])) / float((poststep[0] - prestep[0]))
+                m2 = float((g2[1] - g1[1])) / float((g2[0] - g1[0]))
                 
                 if(m1 != m2):
                     x = (g2[1] - prestep[1] + m1 * prestep[0] - m2 * g2[0]) / (m1 - m2)
@@ -192,7 +192,7 @@ class LSPGate(LSPBeat):
         if(self.split_horizontal):
             blit_alpha(screen, self.img1, (
                 self.grav1.x - self.img1.get_width(),
-                self.grav1.y, 
+                self.grav1.y - self.img2.get_height()/2, 
             ), int(255 * (1.0-min(1.0, elapsed / DECAY_TIME)) ));
 
             blit_alpha(screen, self.img2, (
@@ -222,7 +222,7 @@ class LSPGate(LSPBeat):
         
         breakspot = (self.collidepoint[0] - self.x, self.collidepoint[1] - self.y);
 
-        if( abs(attack_angle) < math.pi/2 or abs((attack_angle - pi)%(2*math.pi)) < math.pi/2 ):
+        if( abs(self.angle) < math.pi/4 or abs((self.angle - math.pi)%math.pi) < math.pi/4 ):
             #vertical 
             self.split_horizontal = False
             r1 = pygame.rect.Rect(0,0,self.rendered.get_width(), self.rendered.get_height()/2)
@@ -233,10 +233,12 @@ class LSPGate(LSPBeat):
             self.grav2 = GravityThing(self.x,self.y, GravityThing.MOM_INIT_X, GravityThing.MOM_INIT_Y);
         else:
             self.split_horizontal = True
-            self.img1 = self.rendered.subsurface(pygame.rect.Rect(0,0,breakspot[0], self.rendered.get_width()))
-            self.img2 = self.rendered.subsurface(pygame.rect.Rect(breakspot[0], 0, self.rendered.get_width()-breakspot[0], self.rendered.get_height()))
-            self.grav1 = GravityThing(breakspot[0],breakspot[1],-GravityThing.MOM_INIT_X, GravityThing.MOM_INIT_Y);
-            self.grav2 = GravityThing(breakspot[0],breakspot[1], GravityThing.MOM_INIT_X, GravityThing.MOM_INIT_Y);
+            r1 = pygame.rect.Rect(0,0,self.rendered.get_width()/2, self.rendered.get_height())
+            r2 = pygame.rect.Rect(self.rendered.get_width()/2,0,self.rendered.get_width()/2, self.rendered.get_height())
+            self.img1 = self.rendered.subsurface(r1)
+            self.img2 = self.rendered.subsurface(r2)
+            self.grav1 = GravityThing(self.x,self.y,-GravityThing.MOM_INIT_X, GravityThing.MOM_INIT_Y);
+            self.grav2 = GravityThing(self.x,self.y, GravityThing.MOM_INIT_X, GravityThing.MOM_INIT_Y);
 
         mult = attack_angle / 2*math.pi
         dtime = gametime - time.time()
@@ -404,6 +406,13 @@ def mainloop(screen, gameobjs, song, bpm):
             #print "spawning obj (ini+spawn = %s, spawn = %s, game-- = %s)"%(initial + gameobjs[objptr].spawntime, gameobjs[objptr].spawntime, gametime - SPAWN_TIME)
             livingobjs.append(gameobjs[objptr])
             objptr += 1
+        """
+        while(len(livingobjs) and 
+            initial + gameobjs[objptr].spawntime <= gametime + SPAWN_TIME):
+            #print "spawning obj (ini+spawn = %s, spawn = %s, game-- = %s)"%(initial + gameobjs[objptr].spawntime, gameobjs[objptr].spawntime, gametime - SPAWN_TIME)
+            livingobjs.append(gameobjs[objptr])
+        objptr += 1
+        """
 
         #============== UPDATES ==============
 
