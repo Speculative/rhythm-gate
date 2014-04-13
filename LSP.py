@@ -3,8 +3,8 @@ import pygame,math,time,sys,random,pygame.gfxdraw
 RESOLUTION_X = 1024
 RESOLUTION_Y = 768
 
-SPAWN_TIME = 0.5
-DECAY_TIME = 0.5
+SPAWN_TIME = 0.2
+DECAY_TIME = 0.2
 
 MOUSE_HISTORY_SIZE =20
 
@@ -182,7 +182,6 @@ class ScoreParticle(object):
 
 		self.elapsed = 0
 
-		self.renderedText;
 
 	def update(self, gametime):
 		elapsed = gametime - self.last
@@ -207,7 +206,7 @@ def do_init():
 
 	pygame.mouse.set_visible(False)
 
-	
+
 
 	if(LSPGate.BLOCK_IMAGE == None):
 		LSPGate.BLOCK_IMAGE = pygame.transform.rotozoom(pygame.image.load("./gate.png"),0,0.4)
