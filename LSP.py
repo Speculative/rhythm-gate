@@ -6,7 +6,7 @@ RESOLUTION_Y = 400
 SPAWN_TIME = 0.2
 DECAY_TIME = 0.2
 
-MOUSE_HISTORY_SIZE =20
+MOUSE_HISTORY_SIZE =100
 
 BKG_COLOR = (45,17,44)
 
@@ -119,7 +119,7 @@ class LSPGate(LSPBeat):
         self.rendered = self.rendered.convert_alpha()
         self.roughrect = pygame.rect.Rect( (self.x-tem/2,self.y-tem/2,tem, tem) );
 
-        print self.roughrect
+        #print self.roughrect
 
     def check_hit(self, mousehistory):
         poststep = mousehistory[-1]
@@ -377,7 +377,7 @@ def mainloop(screen, gameobjs, song, bpm):
 
         #triggering objs
         for obj in livingobjs:
-            if(obj.state == LSPBeat.STATE_WAITING and obj.check_hit(mousehistory)):
+            if(pygame.mouse.get_pressed()[0] and obj.state == LSPBeat.STATE_WAITING and obj.check_hit(mousehistory)):
                 score = obj.trigger(gametime, mousehistory)
                 particles.append(ScoreParticle(obj.x, obj.y, score))
                 for i in range(10):
@@ -415,11 +415,18 @@ def mainloop(screen, gameobjs, song, bpm):
         #render mouse "trails"
         i=0
         for pt in mousehistory:
-            pygame.gfxdraw.filled_circle(
-                screen,
-                pt[0],pt[1],
-                int(5.0*i/MOUSE_HISTORY_SIZE),
-                (255,255,255,255*(0.8*i/MOUSE_HISTORY_SIZE) ))
+            if(pygame.mouse.get_pressed()[0]):
+                                pygame.gfxdraw.filled_circle(
+                    screen,
+                    pt[0],pt[1],
+                    int(10.0*i/MOUSE_HISTORY_SIZE),
+                    (255,255,0,255*(0.8*i/MOUSE_HISTORY_SIZE) ))
+            else:
+                pygame.gfxdraw.filled_circle(
+                    screen,
+                    pt[0],pt[1],
+                    int(5.0*i/MOUSE_HISTORY_SIZE),
+                    (255,255,255,255*(0.8*i/MOUSE_HISTORY_SIZE) ))
             i+=1
 
         #============== cap fps ==============
