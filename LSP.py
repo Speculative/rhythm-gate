@@ -1,7 +1,11 @@
 import pygame,math,time,sys,random,pygame.gfxdraw
 
 RESOLUTION_X = 1024
+<<<<<<< HEAD
 RESOLUTION_Y = 600
+=======
+RESOLUTION_Y = 768
+>>>>>>> b086cd8e7be75ec5ee8f4893ff2a71548be0ac3b
 
 SPAWN_TIME = 0.2
 DECAY_TIME = 0.2
@@ -328,9 +332,9 @@ def do_init():
     ScoreParticle.FONTU_WORST = FONTU.render("KILL YOURSELF", False, scoreColors[4]);
 
 
-    if(LSPGate.BLOCK_IMAGE == None):
-        LSPGate.BLOCK_IMAGE = pygame.transform.rotozoom(pygame.image.load("./gate.png"),0,0.4)
-        LSPGate.BLOCK_IMAGE = LSPGate.BLOCK_IMAGE.convert_alpha(screen)
+    #if(LSPGate.BLOCK_IMAGE == None):
+    LSPGate.BLOCK_IMAGE = pygame.transform.rotozoom(pygame.image.load("./gate.png"),0,0.4)
+    LSPGate.BLOCK_IMAGE = LSPGate.BLOCK_IMAGE.convert_alpha(screen)
 
     return screen
 
@@ -452,12 +456,47 @@ def mainloop(screen, gameobjs, song, bpm):
         pygame.display.flip()
         lastup = time.time()
 
+def parse_map(filename):
+    #Some constants we might look for
+    headers = {'bpm': 0, 'offset': 0}
+    #Ordered list (chronologically) of beat objects
+    beats = []
+
+    f = open(filename, 'r')
+    for line in f:
+        if not line.isspace() and not (line[0] == '#'):
+            line = line.strip()
+            if (line.startswith('FILE')):
+                headers['filename'] = line.split()[1]
+            elif (line.startswith('BPM')):
+                headers['bpm'] = float(line.split()[1])
+            elif (line.startswith('OFFSET')):
+                headers['offset'] = float(line.split()[1])
+            else:
+                #REQUIRES BPM TO HAVE BEEN DEFINED BY THIS POINT
+                if (line.startswith('g')):
+                    #TODO: Create Beat objects
+                    args = line.split(" ")
+                    beat_time = int(args[1]) * 60/headers['bpm'] + headers['offset']
+                    beats.append(LSPGate(beat_time, float(args[2]), float(args[3]), float(args[4])))
+
+    return (headers, beats)
+
+
 if __name__ == "__main__":
     screen = do_init()
 
+    headers, beats = parse_map("./" + sys.argv[1] + ".lsp")
 
+    pygame.mixer.init()
+    s = pygame.mixer.Sound("./" + sys.argv[1] + ".ogg")
+    s.set_volume(1.0)
+    s.play()
+
+    """
     fakelsps = [
             LSPGate(i*1, random.random(), random.random(), random.random()*math.pi*2) for i in range(40)
             ]
+    """
 
-    mainloop(screen, fakelsps, None ,10);
+    mainloop(screen, beats, None ,10);
