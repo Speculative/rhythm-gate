@@ -254,11 +254,11 @@ def do_init():
     pygame.mouse.set_visible(False)
     FONTU = pygame.font.Font("./wire1.ttf", 28);
 
-    ScoreParticle.FONTU_BEST = FONTU.render("PERFECT!", False, (255,255,255,100));
-    ScoreParticle.FONTU_EH = FONTU.render("GOOD!", False, (255,255,255,100));
+    ScoreParticle.FONTU_BEST = FONTU.render("PERFECT!", False, (255,255,0,100));
+    ScoreParticle.FONTU_EH = FONTU.render("GOOD!", False, (0,255,0,100));
     ScoreParticle.FONTU_GOOD = FONTU.render("OKAY", False, (255,255,255,100));
-    ScoreParticle.FONTU_OH = FONTU.render("NOT GREAT", False, (255,255,255,100));
-    ScoreParticle.FONTU_WORST = FONTU.render("KILL YOURSELF", False, (255,255,255,100));
+    ScoreParticle.FONTU_OH = FONTU.render("NOT GREAT", False, (255,255,100,100));
+    ScoreParticle.FONTU_WORST = FONTU.render("KILL YOURSELF", False, (255,0,0,100));
 
 
     if(LSPGate.BLOCK_IMAGE == None):
