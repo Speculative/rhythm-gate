@@ -509,7 +509,7 @@ def parse_map(filename):
                 if (line.startswith('g')):
                     #TODO: Create Beat objects
                     args = line.split(" ")
-                    beat_time = int(args[1]) * 60/headers['bpm'] + headers['offset']
+                    beat_time = float(args[1]) * 60/headers['bpm'] + headers['offset']
                     beats.append(LSPGate(beat_time, float(args[2]), float(args[3]), float(args[4])))
 
     return (headers, beats)
