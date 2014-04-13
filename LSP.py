@@ -41,6 +41,7 @@ class LSPBeat(object):
     STATE_SPAWN = 0
     STATE_WAITING = 1
     STATE_DYING = 2
+    STATE_FAILED = 3
 
     """
     Its basically abstract
@@ -427,7 +428,9 @@ def mainloop(screen, gameobjs, song, bpm):
 
         #triggering objs
         for obj in livingobjs:
-            if(pygame.mouse.get_pressed()[0] and obj.state == LSPBeat.STATE_WAITING and obj.check_hit(mousehistory)):
+            if(pygame.mouse.get_pressed()[0] and
+                (obj.state == LSPBeat.STATE_WAITING || obj.state == LSPBeat.STATE_SPAWN)
+                and obj.check_hit(mousehistory)):
                 score = obj.trigger(gametime, mousehistory)
                 particles.append(ScoreParticle(obj.x, obj.y, score))
                 for i in range(10):
