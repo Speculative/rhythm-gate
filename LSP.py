@@ -10,6 +10,18 @@ MOUSE_HISTORY_SIZE =20
 
 BKG_COLOR = (0x22,0x22,0x22)
 
+
+#HURRR DURR PYTHON SUX
+def blit_alpha(target, source, location, opacity):
+        x = location[0]
+        y = location[1]
+        temp = pygame.Surface((source.get_width(), source.get_height())).convert()
+        temp.blit(target, (-x, -y))
+        temp.blit(source, (0, 0))
+        temp.set_alpha(opacity)        
+        target.blit(temp, location)
+
+
 class LSPBeat(object):
 
 	STATE_SPAWN = 0
@@ -137,11 +149,10 @@ class LSPGate(LSPBeat):
 		LSPBeat.update(self, gametime)
 
 	def render_spawn(self, screen, elapsed):
-		self.rendered.set_alpha( int (255 * min(1.0, elapsed / DECAY_TIME) ))
-		
-		screen.blit(self.rendered, (
-			self.x - self.rendered.get_width()/2 - int(50 * (1.0-min(1.0, elapsed / DECAY_TIME))),
-			self.y - self.rendered.get_height()/2) );
+		blit_alpha(screen, self.rendered, (
+			self.x - self.rendered.get_width()/2 ,
+			self.y - self.rendered.get_height()/2 
+		), int(255 * min(1.0, elapsed / DECAY_TIME)));
 		
 
 	def render_wait(self, screen, elapsed):
@@ -151,11 +162,10 @@ class LSPGate(LSPBeat):
 
 
 	def render_dying(self, screen, elapsed):
-		self.rendered.set_alpha( int(255 * min(1.0, elapsed / DECAY_TIME)) )
-
-		screen.blit(self.rendered, (
-			self.x - self.rendered.get_width()/2 + int(50 * min(1.0, elapsed / DECAY_TIME)),
-			self.y - self.rendered.get_height()/2) );
+		blit_alpha(screen, self.rendered, (
+			self.x - self.rendered.get_width()/2 ,
+			self.y - self.rendered.get_height()/2 
+		), int(255 * (1.0-min(1.0, elapsed / DECAY_TIME)) ));
 
 class ScoreParticle(object):
 	GRAVITY = 5
