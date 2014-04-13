@@ -1,15 +1,24 @@
 import pygame,math,time,sys,random,pygame.gfxdraw
 
 RESOLUTION_X = 1024
-RESOLUTION_Y = 768
+RESOLUTION_Y = 400
 
 SPAWN_TIME = 0.2
 DECAY_TIME = 0.2
 
-MOUSE_HISTORY_SIZE =20
+MOUSE_HISTORY_SIZE =100
 
-BKG_COLOR = (0x22,0x22,0x22)
+BKG_COLOR = (45,17,44)
 
+FONTU = None
+
+scoreColors=[
+    (239,67,57),
+    (202,41,62),
+    (202,41,62),
+    (130,2,51),
+    (83,0,49),
+]
 
 #HURRR DURR PYTHON SUX
 def blit_alpha(target, source, location, opacity):
@@ -105,7 +114,12 @@ class LSPGate(LSPBeat):
             LSPGate.BLOCK_IMAGE,
             math.degrees(angle))
 
+        tem = max(self.rendered.get_width(), self.rendered.get_height())
+
         self.rendered = self.rendered.convert_alpha()
+        self.roughrect = pygame.rect.Rect( (self.x-tem/2,self.y-tem/2,tem, tem) );
+
+        #print self.roughrect
 
     def check_hit(self, mousehistory):
         poststep = mousehistory[-1]
@@ -121,8 +135,6 @@ class LSPGate(LSPBeat):
 
 
     def check_hit(self, mousehistory):
-        poststep = mousehistory[-1]
-        prestep = mousehistory[-2]
 
         #Calculate endpoints of gate
         MAGIC_NUMBER = 100
@@ -146,11 +158,35 @@ class LSPGate(LSPBeat):
             if(m1 != m2):
                 x = (g2[1] - prestep[1] + m1 * prestep[0] - m2 * g2[0]) / (m1 - m2)
                 y = m2 * (x - g2[0]) + g2[1]
-
-                return self.on_segment((x, y), prestep, poststep) and self.on_segment((x, y), g1, g2)
-
-            else:
+            if (poststep[0] == prestep[0]) or (poststep[1] == prestep[1]):
                 return False
+            #Calculate endpoints of gate
+            MAGIC_NUMBER = 100
+            g1 = (self.x + MAGIC_NUMBER * math.sin(self.angle),
+                    self.y + MAGIC_NUMBER * math.cos(self.angle))
+            g2 = (self.x - MAGIC_NUMBER * math.sin(self.angle),
+                    self.y - MAGIC_NUMBER * math.cos(self.angle))
+
+            if (g2[0] == g1[0] and poststep[0] != prestep[0]):
+                m1 = (poststep[1] - prestep[1]) / (poststep[0] - prestep[0])
+                y = prestep[1] + m1 * (g2[0] - prestep[0])
+                return self.on_segment((g2[0], y), prestep, poststep) and self.on_segment((g2[0], y), g1, g2)
+
+            elif (g2[0] == g1[0] and poststep[0] == prestep[0]):
+                return False
+
+            elif (g2[0] != g1[0] and poststep[0] != prestep[0]):
+                m1 = (poststep[1] - prestep[1]) / (poststep[0] - prestep[0])
+                m2 = (g2[1] - g1[1]) / (g2[0] - g1[0])
+                
+                if(m1 != m2):
+                    x = (g2[1] - prestep[1] + m1 * prestep[0] - m2 * g2[0]) / (m1 - m2)
+                    y = m2 * (x - g2[0]) + g2[1]
+
+                    return self.on_segment((x, y), prestep, poststep) and self.on_segment((x, y), g1, g2)
+
+                else:
+                    return False
 
 
     def render_spawn(self, screen, elapsed):
@@ -183,33 +219,86 @@ class LSPGate(LSPBeat):
         else:
             attack_angle = 0
 
-        print attack_angle
+        #print attack_angle
 
         mult = attack_angle / 2*math.pi
         dtime = gametime - time.time()
 
         LSPBeat.trigger(self, gametime, mousehistory)
 
+        return (1.0 - dtime/0.5)*(0.8 + 0.2*mult)
+
     def update(self, gametime):
         LSPBeat.update(self, gametime)
 
 
 class ScoreParticle(object):
-    GRAVITY = 5
-    MOM_INIT_Y = -5
-    MOM_INIT_X = 5
+    GRAVITY = 0.1
+    MOM_INIT_Y = -1
+    MOM_INIT_X = 1
     LIFETIME = 1
 
+
     def __init__(self, x, y, score):
-        self.momentumy = ScoreParticle.MOM_INIT_Y
+        self.momentumy = ScoreParticle.MOM_INIT_Y * random.random()
         self.momentumx = ScoreParticle.MOM_INIT_X * random.random() - ScoreParticle.MOM_INIT_X * random.random()
         self.initial = time.time()
         self.last = self.initial
         self.isdead=False
+        self.x=x
+        self.y=y
 
         self.elapsed = 0
 
-        self.renderedText = 0;
+        if(score>0.8):
+            self.renderedtext = ScoreParticle.FONTU_BEST
+        elif(score>0.6):
+            self.renderedtext = ScoreParticle.FONTU_EH
+        elif(score>0.4):
+            self.renderedtext = ScoreParticle.FONTU_GOOD
+        elif(score>0.2):
+            self.renderedtext = ScoreParticle.FONTU_OH;
+        else:
+            self.renderedtext = ScoreParticle.FONTU_WORST
+            
+    def update(self, gametime):
+        elapsed = gametime - self.last
+        self.momentumy += ScoreParticle.GRAVITY*elapsed
+        self.y += self.momentumy
+        self.x += self.momentumx
+
+        self.elapsed = gametime - self.initial
+
+        if(gametime - self.initial > ScoreParticle.LIFETIME):
+            self.isdead=True
+
+    def render(self, surface):
+        self.renderedtext.set_alpha(255 - 255.0*self.elapsed / ScoreParticle.LIFETIME);
+        surface.blit(self.renderedtext,(self.x, self.y))
+
+class SparksParticle(ScoreParticle):
+    def __init__(self, x, y, score):
+        self.momentumy = ScoreParticle.MOM_INIT_Y * random.random()
+        self.momentumx = ScoreParticle.MOM_INIT_X * random.random() - ScoreParticle.MOM_INIT_X * random.random()
+        self.initial = time.time()
+        self.last = self.initial
+        self.isdead=False
+        self.x=x
+        self.y=y
+
+        self.elapsed = 0
+
+
+        if(score>0.8):
+            self.color = scoreColors[0]
+        elif(score>0.6):
+            self.color = scoreColors[1]
+        elif(score>0.4):
+            self.color = scoreColors[2]
+        elif(score>0.2):
+            self.color = scoreColors[3]
+        else:
+            self.color = scoreColors[4]
 
     def update(self, gametime):
         elapsed = gametime - self.last
@@ -219,21 +308,29 @@ class ScoreParticle(object):
 
         self.elapsed = gametime - self.initial
 
-        if(gametime - self.initial > LIFETIME):
+        if(gametime - self.initial > ScoreParticle.LIFETIME):
             self.isdead=True
 
     def render(self, surface):
-        pass
+        pygame.gfxdraw.filled_circle(surface, int(self.x), int(self.y),
+                int(1.0 * self.elapsed / ScoreParticle.LIFETIME * 5), (255,255,255))
 
 """gets the display screen
 """
 def do_init():
+    global FONTU
     pygame.init();
     pygame.display.set_caption("LSP")
     screen = pygame.display.set_mode((RESOLUTION_X, RESOLUTION_Y))
 
     pygame.mouse.set_visible(False)
+    FONTU = pygame.font.Font("./wire1.ttf", 28);
 
+    ScoreParticle.FONTU_BEST = FONTU.render("PERFECT!", False, scoreColors[0]);
+    ScoreParticle.FONTU_EH = FONTU.render("GOOD!", False, scoreColors[1]);
+    ScoreParticle.FONTU_GOOD = FONTU.render("OKAY", False, scoreColors[2]);
+    ScoreParticle.FONTU_OH = FONTU.render("NOT GREAT", False, scoreColors[3]);
+    ScoreParticle.FONTU_WORST = FONTU.render("KILL YOURSELF", False, scoreColors[4]);
 
 
     #if(LSPGate.BLOCK_IMAGE == None):
@@ -260,7 +357,7 @@ def mainloop(screen, gameobjs, song, bpm):
 
     mousehistory = [pygame.mouse.get_pos()] * MOUSE_HISTORY_SIZE
 
-    print "starting (lapse = %s)"%(framelapse)
+    #print "starting (lapse = %s)"%(framelapse)
 
     while(True):
         gametime = time.time()
@@ -283,7 +380,7 @@ def mainloop(screen, gameobjs, song, bpm):
         #print gameobjs
         while(objptr < len(gameobjs) and 
                 initial + gameobjs[objptr].spawntime <= gametime - SPAWN_TIME):
-            print "spawning obj (ini+spawn = %s, spawn = %s, game-- = %s)"%(initial + gameobjs[objptr].spawntime, gameobjs[objptr].spawntime, gametime - SPAWN_TIME)
+            #print "spawning obj (ini+spawn = %s, spawn = %s, game-- = %s)"%(initial + gameobjs[objptr].spawntime, gameobjs[objptr].spawntime, gametime - SPAWN_TIME)
             livingobjs.append(gameobjs[objptr])
             objptr += 1
 
@@ -293,17 +390,22 @@ def mainloop(screen, gameobjs, song, bpm):
         for obj in livingobjs:
             obj.update(gametime)
 
+        for part in particles:
+            part.update(gametime)
+
         #triggering objs
         for obj in livingobjs:
-            if(obj.state == LSPBeat.STATE_WAITING and obj.check_hit(mousehistory)):
+            if(pygame.mouse.get_pressed()[0] and obj.state == LSPBeat.STATE_WAITING and obj.check_hit(mousehistory)):
                 score = obj.trigger(gametime, mousehistory)
                 particles.append(ScoreParticle(obj.x, obj.y, score))
+                for i in range(10):
+                    particles.append(SparksParticle(obj.x, obj.y, score))
 
         #removing objs
         i = 0
         while i < len(livingobjs):
             if (livingobjs[i].isdead):
-                print "removing obj"
+                #print "removing obj"
                 livingobjs.remove(livingobjs[i])
             else:
                 i += 1
@@ -312,7 +414,7 @@ def mainloop(screen, gameobjs, song, bpm):
         i = 0
         while i < len(particles):
             if (particles[i].isdead):
-                particles.remove(livingobjs[i])
+                particles.remove(particles[i])
             else:
                 i += 1
 
@@ -325,29 +427,31 @@ def mainloop(screen, gameobjs, song, bpm):
             obj.render(screen, gametime)
 
         #render particles
-        for partic in livingobjs:
-            partic.render(screen, gametime)
+        for partic in particles:
+            partic.render(screen)
 
         #render mouse "trails"
         i=0
         for pt in mousehistory:
-            pygame.gfxdraw.filled_circle(
-                screen,
-                pt[0],pt[1],
-                int(5.0*i/MOUSE_HISTORY_SIZE),
-                (255,255,255,255*(0.8*i/MOUSE_HISTORY_SIZE) ))
-            pygame.gfxdraw.aacircle(
-                screen,
-                pt[0],pt[1],
-                int(5.0*i/MOUSE_HISTORY_SIZE),
-                (255,255,255,255*(0.8*i/MOUSE_HISTORY_SIZE) ))
-
+            if(pygame.mouse.get_pressed()[0]):
+                                pygame.gfxdraw.filled_circle(
+                    screen,
+                    pt[0],pt[1],
+                    int(10.0*i/MOUSE_HISTORY_SIZE),
+                    (255,255,0,255*(0.8*i/MOUSE_HISTORY_SIZE) ))
+            else:
+                pygame.gfxdraw.filled_circle(
+                    screen,
+                    pt[0],pt[1],
+                    int(5.0*i/MOUSE_HISTORY_SIZE),
+                    (255,255,255,255*(0.8*i/MOUSE_HISTORY_SIZE) ))
             i+=1
 
         #============== cap fps ==============
         temp = time.time();
         if(temp>lastup+framelapse):
             time.sleep( (lastup + framelapse) - temp)
+            pass
 
         #blit screen
         pygame.display.flip()
@@ -394,7 +498,6 @@ if __name__ == "__main__":
             LSPGate(0, 0.1, 0.7, 0),
             LSPGate(1, 0.4, 0.1, math.pi*0.1),
             LSPGate(2, 0.3, 0.2, math.pi*0.1),
-            LSPGate(3, 0.5, 0.5, 1)
-            ]
+            LSPGate(3, 0.5, 0.5, 1)]
 
     mainloop(screen, beats, None ,10);
