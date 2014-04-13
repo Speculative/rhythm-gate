@@ -425,7 +425,7 @@ def mainloop(screen, gameobjs, song, bpm):
         #triggering objs
         for obj in livingobjs:
             if(pygame.mouse.get_pressed()[0] and
-                (obj.state == LSPBeat.STATE_WAITING || obj.state == LSPBeat.STATE_SPAWN)
+                (obj.state == LSPBeat.STATE_WAITING or obj.state == LSPBeat.STATE_SPAWN)
                 and obj.check_hit(mousehistory)):
                 score = obj.trigger(gametime, mousehistory)
                 particles.append(ScoreParticle(obj.x, obj.y, score))
