@@ -193,6 +193,8 @@ class LSPGate(LSPBeat):
 
         LSPBeat.trigger(self, gametime, mousehistory)
 
+        return random.random()
+
     def update(self, gametime):
         LSPBeat.update(self, gametime)
 
@@ -202,6 +204,7 @@ class ScoreParticle(object):
     MOM_INIT_Y = -1
     MOM_INIT_X = 1
     LIFETIME = 1
+
 
     def __init__(self, x, y, score):
         self.momentumy = ScoreParticle.MOM_INIT_Y
@@ -214,8 +217,17 @@ class ScoreParticle(object):
 
         self.elapsed = 0
 
-        self.renderedtext = FONTU.render("SHIT", False, (255,255,255,100));
-
+        if(score>0.8):
+            self.renderedtext = ScoreParticle.FONTU_BEST;
+        elif(score>0.6):
+            self.renderedtext = ScoreParticle.FONTU_EH;
+        elif(score>0.4):
+            self.renderedtext = ScoreParticle.FONTU_GOOD;
+        elif(score>0.2):
+            self.renderedtext = ScoreParticle.FONTU_OH;
+        else:
+            self.renderedtext = ScoreParticle.FONTU_WORST;
+            
     def update(self, gametime):
         elapsed = gametime - self.last
         self.momentumy += ScoreParticle.GRAVITY*elapsed
@@ -241,6 +253,13 @@ def do_init():
 
     pygame.mouse.set_visible(False)
     FONTU = pygame.font.Font("./wire1.ttf", 28);
+
+    ScoreParticle.FONTU_BEST = FONTU.render("PERFECT!", False, (255,255,0,100));
+    ScoreParticle.FONTU_EH = FONTU.render("GOOD!", False, (0,255,0,100));
+    ScoreParticle.FONTU_GOOD = FONTU.render("OKAY", False, (255,255,255,100));
+    ScoreParticle.FONTU_OH = FONTU.render("NOT GREAT", False, (255,255,100,100));
+    ScoreParticle.FONTU_WORST = FONTU.render("KILL YOURSELF", False, (255,0,0,100));
+
 
     if(LSPGate.BLOCK_IMAGE == None):
         LSPGate.BLOCK_IMAGE = pygame.transform.rotozoom(pygame.image.load("./gate.png"),0,0.4)
@@ -352,7 +371,7 @@ def mainloop(screen, gameobjs, song, bpm):
         if(temp>lastup+framelapse):
             #time.sleep( (lastup + framelapse) - temp)
             pass
-            
+
         #blit screen
         pygame.display.flip()
         lastup = time.time()
