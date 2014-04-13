@@ -106,7 +106,12 @@ class LSPGate(LSPBeat):
             LSPGate.BLOCK_IMAGE,
             math.degrees(angle))
 
+        tem = max(self.rendered.get_width(), self.rendered.get_height())
+
         self.rendered = self.rendered.convert_alpha()
+        self.roughrect = pygame.rect.Rect( (self.x-tem/2,self.y-tem/2,tem, tem) );
+
+        print self.roughrect
 
     def check_hit(self, mousehistory):
         poststep = mousehistory[-1]
@@ -122,38 +127,40 @@ class LSPGate(LSPBeat):
 
 
     def check_hit(self, mousehistory):
-        poststep = mousehistory[-1]
-        prestep = mousehistory[-2]
 
-        if (poststep[0] == prestep[0]) or (poststep[1] == prestep[1]):
-            return False
-        #Calculate endpoints of gate
-        MAGIC_NUMBER = 100
-        g1 = (self.x + MAGIC_NUMBER * math.sin(self.angle),
-                self.y + MAGIC_NUMBER * math.cos(self.angle))
-        g2 = (self.x - MAGIC_NUMBER * math.sin(self.angle),
-                self.y - MAGIC_NUMBER * math.cos(self.angle))
+        if(self.roughrect.collidepoint(mousehistory[-1])):
+            poststep = mousehistory[-1]
+            prestep = mousehistory[-2]
 
-        if (g2[0] == g1[0] and poststep[0] != prestep[0]):
-            m1 = (poststep[1] - prestep[1]) / (poststep[0] - prestep[0])
-            y = prestep[1] + m1 * (g2[0] - prestep[0])
-            return self.on_segment((g2[0], y), prestep, poststep) and self.on_segment((g2[0], y), g1, g2)
-
-        elif (g2[0] == g1[0] and poststep[0] == prestep[0]):
-            return False
-
-        elif (g2[0] != g1[0] and poststep[0] != prestep[0]):
-            m1 = (poststep[1] - prestep[1]) / (poststep[0] - prestep[0])
-            m2 = (g2[1] - g1[1]) / (g2[0] - g1[0])
-            
-            if(m1 != m2):
-                x = (g2[1] - prestep[1] + m1 * prestep[0] - m2 * g2[0]) / (m1 - m2)
-                y = m2 * (x - g2[0]) + g2[1]
-
-                return self.on_segment((x, y), prestep, poststep) and self.on_segment((x, y), g1, g2)
-
-            else:
+            if (poststep[0] == prestep[0]) or (poststep[1] == prestep[1]):
                 return False
+            #Calculate endpoints of gate
+            MAGIC_NUMBER = 100
+            g1 = (self.x + MAGIC_NUMBER * math.sin(self.angle),
+                    self.y + MAGIC_NUMBER * math.cos(self.angle))
+            g2 = (self.x - MAGIC_NUMBER * math.sin(self.angle),
+                    self.y - MAGIC_NUMBER * math.cos(self.angle))
+
+            if (g2[0] == g1[0] and poststep[0] != prestep[0]):
+                m1 = (poststep[1] - prestep[1]) / (poststep[0] - prestep[0])
+                y = prestep[1] + m1 * (g2[0] - prestep[0])
+                return self.on_segment((g2[0], y), prestep, poststep) and self.on_segment((g2[0], y), g1, g2)
+
+            elif (g2[0] == g1[0] and poststep[0] == prestep[0]):
+                return False
+
+            elif (g2[0] != g1[0] and poststep[0] != prestep[0]):
+                m1 = (poststep[1] - prestep[1]) / (poststep[0] - prestep[0])
+                m2 = (g2[1] - g1[1]) / (g2[0] - g1[0])
+                
+                if(m1 != m2):
+                    x = (g2[1] - prestep[1] + m1 * prestep[0] - m2 * g2[0]) / (m1 - m2)
+                    y = m2 * (x - g2[0]) + g2[1]
+
+                    return self.on_segment((x, y), prestep, poststep) and self.on_segment((x, y), g1, g2)
+
+                else:
+                    return False
 
 
     def render_spawn(self, screen, elapsed):
@@ -193,7 +200,7 @@ class LSPGate(LSPBeat):
 
         LSPBeat.trigger(self, gametime, mousehistory)
 
-        return random.random()
+        return (1.0 - dtime/0.5)*(0.8 + 0.2*mult)
 
     def update(self, gametime):
         LSPBeat.update(self, gametime)
@@ -382,9 +389,9 @@ if __name__ == "__main__":
 
     fakelsps = [
             LSPGate(0, 0.1, 0.7, 0),
-            LSPGate(0, 0.4, 0.1, math.pi*0.1),
-            LSPGate(0, 0.3, 0.2, math.pi*0.1),
-            LSPGate(0, 0.5, 0.5, 1)
+            LSPGate(0.5, 0.4, 0.1, math.pi*0.1),
+            LSPGate(1, 0.3, 0.2, math.pi*0.1),
+            LSPGate(1.5, 0.5, 0.5, 1)
             ]
 
     mainloop(screen, fakelsps, None ,10);
