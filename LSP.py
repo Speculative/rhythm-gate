@@ -8,7 +8,7 @@ RESOLUTION_Y = 768
 >>>>>>> b086cd8e7be75ec5ee8f4893ff2a71548be0ac3b
 
 SPAWN_TIME = 0.8
-HOLD_BEFORE_DEATH=1.0
+HOLD_BEFORE_DEATH=0.8
 DECAY_TIME = 0.4
 
 MOUSE_HISTORY_SIZE =100
@@ -16,6 +16,7 @@ MOUSE_HISTORY_SIZE =100
 BKG_COLOR = (45,17,44)
 
 FONTU = None
+BACKGROUND = None
 
 scoreColors=[
     (225, 233, 43),
@@ -385,7 +386,8 @@ class SparksParticle(ScoreParticle):
 """gets the display screen
 """
 def do_init():
-    global FONTU
+    global FONTU, BACKGROUND
+
     pygame.init();
     pygame.display.set_caption("LSP")
     screen = pygame.display.set_mode((RESOLUTION_X, RESOLUTION_Y))
@@ -401,8 +403,10 @@ def do_init():
 
 
     #if(LSPGate.BLOCK_IMAGE == None):
-    LSPGate.BLOCK_IMAGE = pygame.transform.rotozoom(pygame.image.load("./gate.png"),0,0.4)
+    LSPGate.BLOCK_IMAGE = pygame.transform.rotozoom(pygame.image.load("./gatenew.png"),0,0.4)
     LSPGate.BLOCK_IMAGE = LSPGate.BLOCK_IMAGE.convert_alpha(screen)
+
+    #BACKGROUND = pygame.image.load("./background.png")
 
     return screen
 
@@ -491,6 +495,9 @@ def mainloop(screen, gameobjs, song, bpm):
 
         screen.fill(BKG_COLOR)
 
+        #render bkg img
+        #screen.blit(BACKGROUND,(0,0))
+
         #render objs
         for obj in livingobjs:
             obj.render(screen, gametime)
@@ -518,7 +525,7 @@ def mainloop(screen, gameobjs, song, bpm):
 
         #============== cap fps ==============
         temp = time.time();
-        if(temp>lastup+framelapse):
+        if(temp<lastup+framelapse):
             time.sleep( (lastup + framelapse) - temp)
             pass
 
