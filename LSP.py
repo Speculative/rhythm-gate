@@ -228,7 +228,7 @@ class LSPGate(LSPBeat):
     def render_failed(self, screen, elapsed):
         colored = pygame.transform.rotate(self.rendered, self.grav.rot);
         cul = pygame.Color( scoreColors[-1][0], scoreColors[-1][1], scoreColors[-1][2] )
-        cul.a = int(255 * elapsed / DECAY_TIME)
+        cul.a = max(0, min (255, int(255 * elapsed / DECAY_TIME)))
         colored.fill(cul, special_flags=pygame.BLEND_RGB_MULT)
 
         blit_alpha(screen, colored, (
@@ -412,7 +412,7 @@ def do_init():
         order of hit time
 
 """
-def mainloop(screen, gameobjs, song, bpm):
+def mainloop(screen, gameobjs, bpm):
     initial = time.time()
     lastup = initial
     framelapse = 1.0/60.0
@@ -420,13 +420,14 @@ def mainloop(screen, gameobjs, song, bpm):
     livingobjs = []
     particles = []
     objptr = 0
+    combo = 0
 
     mousehistory = [pygame.mouse.get_pos()] * MOUSE_HISTORY_SIZE
 
     #print "starting (lapse = %s)"%(framelapse)
 
     while(True):
-        gametime = time.time()
+        gametime = initial + pygame.mixer.music.get_pos()/1000.0
         elapsedTime = gametime - lastup
 
         #============== EVT ==============
@@ -468,6 +469,7 @@ def mainloop(screen, gameobjs, song, bpm):
                 (obj.state == LSPBeat.STATE_WAITING or obj.state == LSPBeat.STATE_SPAWN)
                 and obj.check_hit(mousehistory)):
                 score = obj.trigger(gametime, mousehistory)
+                combo += 1
                 particles.append(ScoreParticle(obj.x, obj.y, score))
                 for i in range(10):
                     particles.append(SparksParticle(obj.x, obj.y, score))
@@ -564,9 +566,9 @@ if __name__ == "__main__":
     headers, beats = parse_map("./" + sys.argv[1] + ".lsp")
 
     pygame.mixer.init()
-    s = pygame.mixer.Sound("./" + sys.argv[1] + ".ogg")
-    s.set_volume(1.0)
-    s.play()
+    s = pygame.mixer.music.load("./" + sys.argv[1] + ".ogg")
+    pygame.mixer.music.set_volume(1.0)
+    pygame.mixer.music.play()
 
     """
     fakelsps = [
@@ -574,4 +576,4 @@ if __name__ == "__main__":
             ]
     """
 
-    mainloop(screen, beats, None ,10);
+    mainloop(screen, beats ,10);
