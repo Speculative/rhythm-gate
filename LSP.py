@@ -4,7 +4,7 @@ RESOLUTION_X = 1024
 RESOLUTION_Y = 600
 
 SPAWN_TIME = 0.8
-HOLD_BEFORE_DEATH=0.8
+HOLD_BEFORE_DEATH=0.4
 DECAY_TIME = 0.4
 
 MOUSE_HISTORY_SIZE =100
@@ -243,11 +243,10 @@ class LSPGate(LSPBeat):
                     (mousehistory[-1][0] - mousehistory[-2][0]))
         else:
             attack_angle = 0
-
         
         breakspot = (self.collidepoint[0] - self.x, self.collidepoint[1] - self.y);
 
-        if( abs(self.angle) < math.pi/4 or abs((self.angle - math.pi)%math.pi) < math.pi/4 ):
+        if( abs(self.angle) < math.pi/4 or abs(self.angle - math.pi) % math.pi  < math.pi/4 ):
             #vertical 
             self.split_horizontal = False
             r1 = pygame.rect.Rect(0,0,self.rendered.get_width(), self.rendered.get_height()/2)
@@ -435,6 +434,9 @@ def mainloop(screen, gameobjs, song, bpm):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
+            if event.type == pygame.KEYDOWN and event.unicode == pygame.K_ESCAPE:
+                sys.exit()
+
 
         #============== MOUSE HIST ==============
 
