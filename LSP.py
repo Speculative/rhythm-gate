@@ -14,11 +14,11 @@ BKG_COLOR = (45,17,44)
 FONTU = None
 
 scoreColors=[
-    (239,67,57),
-    (202,41,62),
-    (202,41,62),
-    (130,2,51),
-    (83,0,49),
+    (225, 233, 43),
+    (197, 255, 96),
+    (167, 252, 253),
+    (255, 148, 70),
+    (225, 67, 23),
 ]
 
 #HURRR DURR PYTHON SUX
@@ -85,6 +85,7 @@ class LSPBeat(object):
             self.changetime = gametime
             self.isdead = True
 
+
     def check_hit(self,mousehistory):
         return False
 
@@ -95,6 +96,9 @@ class LSPBeat(object):
         pass
 
     def render_dying(self,screen, elapsed):
+        pass
+
+    def render_failed(self,screen,elapsed):
         pass
 
 class LSPGate(LSPBeat):
