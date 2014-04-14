@@ -1,7 +1,7 @@
 import pygame,math,time,sys,random,pygame.gfxdraw
 
 RESOLUTION_X = 1024
-RESOLUTION_Y = 400
+RESOLUTION_Y = 768
 
 SPAWN_TIME = 0.2
 DECAY_TIME = 0.2
@@ -136,28 +136,10 @@ class LSPGate(LSPBeat):
 
     def check_hit(self, mousehistory):
 
-        #Calculate endpoints of gate
-        MAGIC_NUMBER = 100
-        g1 = (self.x + MAGIC_NUMBER * math.sin(self.angle),
-                self.y + MAGIC_NUMBER * math.cos(self.angle))
-        g2 = (self.x - MAGIC_NUMBER * math.sin(self.angle),
-                self.y - MAGIC_NUMBER * math.cos(self.angle))
+        if(self.roughrect.collidepoint(mousehistory[-1])):
+            poststep = mousehistory[-1]
+            prestep = mousehistory[-2]
 
-        if (g2[0] == g1[0] and poststep[0] != prestep[0]):
-            m1 = (poststep[1] - prestep[1]) / (poststep[0] - prestep[0])
-            y = prestep[1] + m1 * (g2[0] - prestep[0])
-            return self.on_segment((g2[0], y), prestep, poststep) and self.on_segment((g2[0], y), g1, g2)
-
-        elif (g2[0] == g1[0] and poststep[0] == prestep[0]):
-            return False
-
-        elif (g2[0] != g1[0] and poststep[0] != prestep[0]):
-            m1 = (poststep[1] - prestep[1]) / (poststep[0] - prestep[0])
-            m2 = (g2[1] - g1[1]) / (g2[0] - g1[0])
-            
-            if(m1 != m2):
-                x = (g2[1] - prestep[1] + m1 * prestep[0] - m2 * g2[0]) / (m1 - m2)
-                y = m2 * (x - g2[0]) + g2[1]
             if (poststep[0] == prestep[0]) or (poststep[1] == prestep[1]):
                 return False
             #Calculate endpoints of gate
@@ -494,10 +476,10 @@ if __name__ == "__main__":
     s.set_volume(1.0)
     s.play()
 
+    """
     fakelsps = [
-            LSPGate(0, 0.1, 0.7, 0),
-            LSPGate(1, 0.4, 0.1, math.pi*0.1),
-            LSPGate(2, 0.3, 0.2, math.pi*0.1),
-            LSPGate(3, 0.5, 0.5, 1)]
+            LSPGate(i*1, random.random(), random.random(), random.random()*math.pi*2) for i in range(40)
+            ]
+    """
 
     mainloop(screen, beats, None ,10);
