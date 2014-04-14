@@ -1,11 +1,7 @@
 import pygame,math,time,sys,random,pygame.gfxdraw
 
 RESOLUTION_X = 1024
-<<<<<<< HEAD
 RESOLUTION_Y = 600
-=======
-RESOLUTION_Y = 768
->>>>>>> b086cd8e7be75ec5ee8f4893ff2a71548be0ac3b
 
 SPAWN_TIME = 0.8
 HOLD_BEFORE_DEATH=0.4
