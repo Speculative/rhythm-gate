@@ -570,10 +570,10 @@ if __name__ == "__main__":
     pygame.mixer.music.set_volume(1.0)
     pygame.mixer.music.play()
 
-    """
+    
     fakelsps = [
-            LSPGate(i*1, random.random(), random.random(), random.random()*math.pi*2) for i in range(40)
+            LSPGate(14+i*0.66666, random.random(), random.random(), random.random()*math.pi*2) for i in range(200)
             ]
-    """
+    
 
-    mainloop(screen, beats ,10);
+    mainloop(screen, beats+fakelsps ,10);
